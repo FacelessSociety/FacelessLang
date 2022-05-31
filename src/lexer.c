@@ -1,23 +1,25 @@
 #include <lexer.h>
-#include <stddef.h>
 #include <ctype.h>
 #include <panic.h>
 #include <colors.h>
 #include <string.h>
 
-static FILE* in = NULL;
+extern FILE* in;
 static size_t line = 1;
 static uint8_t eof = 0;
 static size_t fp_off = 0;
 
-void lexer_init(FILE* fp) {
-    if (fp != NULL) return;
-    in = fp;
+void lexer_init(void) {
+    if (in != NULL) return;
     eof = 0;
     fp_off = 0;
     line = 1;
 }
 
+
+size_t get_line(void) {
+    return line;
+}
 
 static char next(void) {
     if (eof) return EOF;
@@ -64,6 +66,11 @@ static char skip(void) {
     }
 
     return c;
+}
+
+
+uint8_t is_eof(void) {
+    return eof;
 }
 
 

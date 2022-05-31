@@ -18,7 +18,7 @@ typedef enum {
 struct Token {
     union {
         char* str;
-        uint64_t val_int;
+        int64_t val_int;
     };
 
     TOKEN_TYPE type;

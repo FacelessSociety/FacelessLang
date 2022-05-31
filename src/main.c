@@ -3,32 +3,40 @@
 #include <colors.h>
 #include <stdlib.h>
 #include <lexer.h>
+#include <parse.h>
+#include <AST.h>
 
 // 2022 Ian Moffett
 
 
-static FILE* fp;
+FILE* in;
 
 
 void panic(void) {
-    fclose(fp);
+    fclose(in);
+    free_ast();
     exit(1);
 }
 
 
 static void run(const char* filename) {
-    fp = fopen(filename, "r");
-
-    lexer_init(fp);
-
-    fclose(fp);
+    in = fopen(filename, "r");
+    lexer_init();                 // Setup lexer.
+    parse();                        // Parse.
+    free_ast();                     // Free AST.
+    fclose(in);
 }
 
 
 
 int main(int argc, char** argv) {
-    for (int i = 0; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i) {
         if (argv[i][0] != '-') {
+            if (access(argv[i], F_OK) != 0) {
+                printf("fcomp: Could not open \"%s\"!\n", argv[i]);
+                exit(1);
+            }
+
             run(argv[i]);
         }
     }

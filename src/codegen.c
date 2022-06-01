@@ -101,10 +101,9 @@ static void cg_prologue(void) {
 
 static void cg_epilogue(void) {
   fputs(
-    "\tmov eax, 1"
+    "\tmov eax, 1\n"
 	"\tmov ebx, 0\n"
-	"\tleave\n"
-	"\tretq\n",
+    "\tint 0x80",
     out);
 }
 
@@ -143,7 +142,12 @@ void codegen_end(void) {
     if (out == NULL) return;
     cg_epilogue();
     fclose(out);
-    system("mv /tmp/fcomp_out.s ./");
+    system("nasm -felf64 /tmp/fcomp_out.s -o ./out.o");
+    system("gcc -fno-pie -m64 -no-pie out.o");
+
+    // Remove junk.
+    remove("/tmp/fcomp_out.s");
+    remove("out.o");
 }
 
 void codegen_init(void) {

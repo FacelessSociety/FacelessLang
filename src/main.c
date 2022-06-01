@@ -10,6 +10,10 @@
 
 // 2022 Ian Moffett
 
+#if defined(_WIN32) || defined(WIN32)
+#error LINUX ONLY.
+#endif
+
 
 FILE* in;
 const char* cur_filename;

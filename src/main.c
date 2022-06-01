@@ -5,21 +5,25 @@
 #include <lexer.h>
 #include <parse.h>
 #include <AST.h>
+#include <codegen.h>
 
 // 2022 Ian Moffett
 
 
 FILE* in;
+const char* cur_filename;
 
 
 void panic(void) {
     fclose(in);
     free_ast();
+    codegen_end();
     exit(1);
 }
 
 
 static void run(const char* filename) {
+    cur_filename = filename;
     in = fopen(filename, "r");
     lexer_init();                 // Setup lexer.
     parse();                        // Parse.
@@ -38,6 +42,7 @@ int main(int argc, char** argv) {
             }
 
             run(argv[i]);
+            break;
         }
     }
 }

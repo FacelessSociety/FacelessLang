@@ -3,6 +3,7 @@
 #include <panic.h>
 #include <expr.h>
 #include <AST.h>
+#include <codegen.h>
 #include <token.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -59,37 +60,10 @@ static struct ASTNode* binexpr(void) {
 }
 
 
-static int64_t interpret_ast(struct ASTNode* node) { 
-    int64_t leftval, rightval;
-
-    // Get left and right sub-tree vaues.
-    if (node->left)
-        leftval = interpret_ast(node->left);
-
-    if (node->right)
-        rightval = interpret_ast(node->right);
-
-    switch (node->op) {
-        case A_ADD:
-            return leftval + rightval;
-        case A_SUB:
-            return leftval - rightval;
-        case A_MUL:
-            return leftval * rightval;
-        case A_DIV:
-            return leftval / rightval;
-        case A_INTLIT:
-            return node->val_int;
-        default:
-            printf("Unknown AST operator caught in %s().\n", __func__);
-            panic();
-    }
-
-    return -1;
-}
-
 
 void parse(void) {
+    codegen_init();
     scan(&cur_token);
-    printf("%ld\n", interpret_ast(binexpr()));
+    interpret_ast(binexpr());
+    codegen_end();
 }

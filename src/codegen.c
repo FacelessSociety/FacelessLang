@@ -9,7 +9,6 @@
 
 
 #define MAX_REGS 4
-typedef uint8_t REG_COUNTER;
 
 
 // Out file.
@@ -46,34 +45,34 @@ static void cg_free_reg(REG_COUNTER reg_id) {
 // Add two registers together and return register
 // id with result.
 static REG_COUNTER cg_add(REG_COUNTER r1, REG_COUNTER r2) {
-    fprintf(out, "\tadd\t%s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tadd %s, %s\n", regs[r1], regs[r2]);
     cg_free_reg(r2);
     return r1;
 }
 
 
 static REG_COUNTER cg_mul(REG_COUNTER r1, REG_COUNTER r2) {
-    fprintf(out, "\timul\t%s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\timul %s, %s\n", regs[r1], regs[r2]);
     cg_free_reg(r2);
     return r1;
 }
 
 static REG_COUNTER cg_sub(REG_COUNTER r1, REG_COUNTER r2) {
-    fprintf(out, "\tsub\t%s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tsub %s, %s\n", regs[r1], regs[r2]);
     cg_free_reg(r2);
     return r1;
 }
 
 
 static REG_COUNTER cg_div(REG_COUNTER r1, REG_COUNTER r2) {
-    fprintf(out, "\tidiv\t%s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tidiv %s, %s\n", regs[r1], regs[r2]);
     cg_free_reg(r2);
     return r1;
 }
 
 static REG_COUNTER cg_load(uint64_t value) {
     REG_COUNTER reg = alloc_reg();
-    fprintf(out, "\tmov\t%s, %ld\n", regs[reg], value);
+    fprintf(out, "\tmov %s, %ld\n", regs[reg], value);
     return reg;
 }
 
@@ -82,14 +81,14 @@ static void cg_prologue(void) {
   fputs(
         "default rel\n"
         "global main\n"
-        "extern printf\n"
+        "extern printf\n\n"
         "section .text\n"
         "print_int:\n"
         "\t.fmtint: db \"%d\", 0xA, 0x0\n"
         "\tpush rbp\n"
         "\tmov rbp, rsp\n"
         "\tsub rsp, 16\n"
-        "\tmov esi, ebx\n"                  // EBX is used to hold int we want to print.
+        "\tmov rsi, rbx\n"                  // RBX is used to hold int we want to print.
         "\tlea rdi, [rel .fmtint]\n"
         "\txor eax, eax\n"
         "\tcall printf\n"
@@ -105,6 +104,11 @@ static void cg_epilogue(void) {
 	"\tmov ebx, 0\n"
     "\tint 0x80",
     out);
+}
+
+void codegen_printint(REG_COUNTER reg) {
+    fprintf(out, "\tmov rbx, %s\n", regs[reg]);
+    fprintf(out, "\tcall print_int\n");
 }
 
 

@@ -64,6 +64,6 @@ static struct ASTNode* binexpr(void) {
 void parse(void) {
     codegen_init();
     scan(&cur_token);
-    interpret_ast(binexpr());
+    codegen_printint(interpret_ast(binexpr()));
     codegen_end();
 }

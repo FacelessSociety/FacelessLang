@@ -139,15 +139,22 @@ int32_t interpret_ast(struct ASTNode* node) {
 
 
 void codegen_end(void) {
+    extern uint8_t asm_only;
+
     if (out == NULL) return;
     cg_epilogue();
     fclose(out);
-    system("nasm -felf64 /tmp/fcomp_out.s -o ./out.o");
-    system("gcc -fno-pie -m64 -no-pie out.o");
 
-    // Remove junk.
-    remove("/tmp/fcomp_out.s");
-    remove("out.o");
+    if (!(asm_only)) {
+        system("nasm -felf64 /tmp/fcomp_out.s -o ./out.o");
+        system("gcc -fno-pie -m64 -no-pie out.o");
+
+        // Remove junk.
+        remove("/tmp/fcomp_out.s");
+        remove("out.o");
+    } else {
+        system("mv /tmp/fcomp_out.s ./");
+    }
 }
 
 void codegen_init(void) {

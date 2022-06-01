@@ -6,12 +6,14 @@
 #include <parse.h>
 #include <AST.h>
 #include <codegen.h>
+#include <string.h>
 
 // 2022 Ian Moffett
 
 
 FILE* in;
 const char* cur_filename;
+uint8_t asm_only = 0;
 
 
 void panic(void) {
@@ -43,6 +45,8 @@ int main(int argc, char** argv) {
 
             run(argv[i]);
             break;
+        } else if (strcmp(argv[i], "-S") == 0) {
+            asm_only = 1;
         }
     }
 }

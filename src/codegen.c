@@ -28,6 +28,7 @@ static inline void cg_freeall_regs(void) {
 static int8_t alloc_reg(void) {
     for (REG_COUNTER reg = 0; reg < MAX_REGS; ++reg) {
         if (!(reg_bmp & (1 << reg))) {
+            reg_bmp |= (1 << reg);
             return reg;
         }
     }
@@ -64,8 +65,13 @@ static REG_COUNTER cg_sub(REG_COUNTER r1, REG_COUNTER r2) {
 }
 
 
+// Divide first register by second 
+// and return register that contains result.
 static REG_COUNTER cg_div(REG_COUNTER r1, REG_COUNTER r2) {
-    fprintf(out, "\tidiv %s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tmov rax, %s\n", regs[r1]);
+    fprintf(out, "\tcqo\n");
+    fprintf(out, "\tidiv %s\n", regs[r2]);
+    fprintf(out, "\tmov %s, rax\n", regs[r1]);
     cg_free_reg(r2);
     return r1;
 }

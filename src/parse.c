@@ -34,8 +34,8 @@ static struct ASTNode* primary(void) {
 // Ensure the next token is @tok.
 static void match(TOKEN_TYPE tok, char* what) {
     if (cur_token.type != tok) {
-        printf("%s expected on line %ld\n", what, get_line());
-        printf("<tok@%d>\n", cur_token.type);
+        printf(COLOR_ERROR "%s expected on line %ld\n", what, get_line());
+        printf(COLOR_YELLOW "<tok@%d>\n", cur_token.type);
         panic();
     }
 }

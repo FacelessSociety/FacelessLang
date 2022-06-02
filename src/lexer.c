@@ -4,10 +4,14 @@
 #include <colors.h>
 #include <string.h>
 
+#define IDENT_MAX_LENGTH 35
+
+
 extern FILE* in;
 static size_t line = 1;
 static uint8_t eof = 0;
 static size_t fp_off = 0;
+static char last_ident[IDENT_MAX_LENGTH];
 
 void lexer_init(void) {
     if (in != NULL) return;
@@ -26,14 +30,13 @@ static char next(void) {
 
     char c = fgetc(in);
 
-    if (c == '\n') ++line;
     ++fp_off;
     return c;
 }
 
 
 static void putback(void) {
-    fseek(in, fp_off - 1, SEEK_SET);
+    fseek(in, fp_off -= 1, SEEK_SET);
 }
 
 
@@ -62,6 +65,7 @@ static char skip(void) {
     char c = next();
 
     while (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f') {
+        if (c == '\n') ++line;
         c = next();
     }
 
@@ -74,12 +78,41 @@ uint8_t is_eof(void) {
 }
 
 
+static void scan_ident(char c) {
+    uint16_t i = 0;
+
+    while (isalpha(c) || isdigit(c) || c == '_') {
+        if (i == IDENT_MAX_LENGTH - 1) {
+            printf(COLOR_ERROR "Identifier too long on line %ld\n", line);
+            panic();
+        }
+
+        last_ident[i++] = c;
+        c = next();
+    }
+
+    putback();
+}
+
+
+static TOKEN_TYPE check_keyword(void) {
+    if (strcmp(last_ident, "conout") == 0) {
+        return TT_CONOUT;
+    }
+
+    return TT_INVALID;
+}
+
+
 uint8_t scan(struct Token* token) {
     if (eof) return 0;
 
     char c = skip();
 
     switch (c) {
+        case ';':
+            token->type = TT_SEMI;
+            break;
         case EOF:
             eof = 1;
             return 0;
@@ -94,6 +127,12 @@ uint8_t scan(struct Token* token) {
             break;
         case '/':
             token->type = TT_SLASH;
+            break; 
+        case '(':
+            token->type = TT_LPAREN;
+            break;
+        case ')':
+            token->type = TT_RPAREN;
             break;
         default:
             if (isdigit(c)) {
@@ -101,6 +140,11 @@ uint8_t scan(struct Token* token) {
                 token->type = TT_INTLIT;
                 break;
             }
+
+            scan_ident(c);
+            token->type = check_keyword();
+
+            if (token->type != TT_INVALID) break;
 
             printf(COLOR_ERROR "Unknown token found while scanning.\n");
             panic();

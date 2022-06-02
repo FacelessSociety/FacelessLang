@@ -9,9 +9,14 @@
 typedef enum {
     TT_PLUS,
     TT_MINUS,
-    TT_SLASH,
     TT_STAR,
-    TT_INTLIT
+    TT_SLASH,
+    TT_INTLIT,
+    TT_SEMI,
+    TT_CONOUT,
+    TT_LPAREN,
+    TT_RPAREN,
+    TT_INVALID
 } TOKEN_TYPE;
 
 

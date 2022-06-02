@@ -31,6 +31,35 @@ static struct ASTNode* primary(void) {
     return NULL;
 }
 
+// Ensure the next token is @tok.
+static void match(TOKEN_TYPE tok, char* what) {
+    if (cur_token.type != tok) {
+        printf("%s expected on line %ld\n", what, get_line());
+        printf("<tok@%d>\n", cur_token.type);
+        panic();
+    }
+}
+
+
+// Ensure the next token is a semicolon.
+static void semi(void) {
+    match(TT_SEMI, "';'");
+    scan(&cur_token);
+}
+
+
+// Ensure next token is lparen.
+static void lparen(void) {
+    match(TT_LPAREN, "'('");
+    scan(&cur_token);
+}
+
+// Ensure next token is rparen.
+static void rparen(void) {
+    match(TT_RPAREN, "')'");
+    scan(&cur_token);
+}
+
 
 static struct ASTNode* binexpr(void) {
     struct ASTNode *n, *left, *right;
@@ -41,8 +70,10 @@ static struct ASTNode* binexpr(void) {
 
     // If there is no tokens left, return the 
     // left node.
-    if (is_eof()) {
+    if (cur_token.type == TT_SEMI || cur_token.type == TT_RPAREN) {
         return left;
+    } else if (is_eof()) {
+        semi();                 // This won't be called, it will fail.
     }
 
     // Convert token into AST_NODE_TYPE.
@@ -60,10 +91,31 @@ static struct ASTNode* binexpr(void) {
 }
 
 
+static void conout(void) {
+    scan(&cur_token);
+    lparen();
+    struct ASTNode* tree = binexpr();
+    rparen();
+    semi();
+
+    codegen_printint(interpret_ast(tree));
+}
+
+
+
+static void keyword(void) {
+    switch (cur_token.type) {
+        case TT_CONOUT:
+            conout();
+            break;
+        default: break;
+    }
+}
+
 
 void parse(void) {
     codegen_init();
     scan(&cur_token);
-    codegen_printint(interpret_ast(binexpr()));
+    keyword();
     codegen_end();
 }

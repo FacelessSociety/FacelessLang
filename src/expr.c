@@ -2,6 +2,7 @@
 #include <panic.h>
 #include <colors.h>
 #include <stdio.h>
+#include <lexer.h>
 
 // 2022 Ian Moffett.
 
@@ -18,7 +19,8 @@ AST_NODE_TYPE arithop(TOKEN_TYPE token) {
         case TT_SLASH:
             return A_DIV;
         default: 
-            printf("Invalid token caught in %s()!", __func__);
+            printf("Invalid token caught, line %ld\n", get_line());
+            printf("<tok@%d>\n", token);
             panic();
     }
 

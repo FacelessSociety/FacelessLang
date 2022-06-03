@@ -1,1 +1,3 @@
 conout(2 < 2);
+u8 cmp = 1 < 2;
+conout(cmp);

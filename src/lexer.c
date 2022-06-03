@@ -143,8 +143,37 @@ uint8_t scan(struct Token* token) {
             token->type = TT_RPAREN;
             break;
         case '=':
-            token->type = TT_ASSIGN;
+            if ((c = next() == '=')) {
+                token->type = TT_EQ;
+            } else {
+                putback(); 
+                token->type = TT_ASSIGN;
+            }
             break;
+        case '<':
+            if ((c = next()) == '=') {
+                token->type = TT_LE;
+            } else {
+                putback();
+                token->type = TT_LT;
+            }
+            break;
+        case '>':
+            if ((c = next()) == '=') {
+                token->type = TT_GE;
+            } else {
+                putback();
+                token->type = TT_GT; 
+            }
+            break;
+        case '!':
+            if ((c = next()) == '=') {
+                token->type = TT_NE;
+            } else {
+                printf(COLOR_ERROR "Unrecognized token whil scanning on line %ld\n", get_line());
+                panic();
+            }
+            break; 
         default:
             if (isdigit(c)) {
                 token->val_int = scan_int(c);

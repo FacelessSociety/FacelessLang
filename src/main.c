@@ -6,6 +6,7 @@
 #include <parse.h>
 #include <AST.h>
 #include <codegen.h>
+#include <symbol.h>
 #include <string.h>
 
 // 2022 Ian Moffett
@@ -24,6 +25,7 @@ void panic(void) {
     fclose(in);
     free_ast();
     codegen_end();
+    destroy_symbols();
     exit(1);
 }
 
@@ -34,6 +36,7 @@ static void run(const char* filename) {
     lexer_init();                 // Setup lexer.
     parse();                        // Parse.
     free_ast();                     // Free AST.
+    destroy_symbols();
     fclose(in);
 }
 

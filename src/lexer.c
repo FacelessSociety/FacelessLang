@@ -21,6 +21,11 @@ void lexer_init(void) {
 }
 
 
+const char* lexer_get_last_ident(void) {
+    return last_ident;
+}
+
+
 size_t get_line(void) {
     return line;
 }
@@ -92,15 +97,18 @@ static void scan_ident(char c) {
     }
 
     putback();
+    last_ident[i] = '\0';
 }
 
 
 static TOKEN_TYPE check_keyword(void) {
     if (strcmp(last_ident, "conout") == 0) {
         return TT_CONOUT;
+    } else if (strcmp(last_ident, "u8") == 0) {
+        return TT_U8;
     }
 
-    return TT_INVALID;
+    return TT_IDENT;
 }
 
 
@@ -133,6 +141,9 @@ uint8_t scan(struct Token* token) {
             break;
         case ')':
             token->type = TT_RPAREN;
+            break;
+        case '=':
+            token->type = TT_ASSIGN;
             break;
         default:
             if (isdigit(c)) {

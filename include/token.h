@@ -16,6 +16,9 @@ typedef enum {
     TT_CONOUT,
     TT_LPAREN,
     TT_RPAREN,
+    TT_U8,
+    TT_IDENT,
+    TT_ASSIGN,
     TT_INVALID
 } TOKEN_TYPE;
 

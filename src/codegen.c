@@ -1,5 +1,6 @@
 #include <codegen.h>
 #include <panic.h>
+#include <symbol.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -115,18 +116,39 @@ static void cg_epilogue(void) {
 void codegen_printint(REG_COUNTER reg) {
     fprintf(out, "\tmov rbx, %s\n", regs[reg]);
     fprintf(out, "\tcall print_int\n");
+    cg_freeall_regs();
 }
 
 
-int32_t interpret_ast(struct ASTNode* node) {
+// Store a registers value into a var.
+static REG_COUNTER cg_stor_glob(REG_COUNTER r, char* sym) {
+    fprintf(out, "\tmov [%s], %s\n", sym, regs[r]);
+    return r;
+}
+
+
+// Load a variables value into a register.
+static REG_COUNTER cg_load_glob(const char* sym) {
+    // Allocate a register for storing variable value.
+    REG_COUNTER reg_alloc = alloc_reg();
+
+    // Generate some assembly.
+    fprintf(out, "\tmov %s, [%s]\n", regs[reg_alloc], sym);
+
+    // Return allocated register.
+    return reg_alloc;
+}
+
+
+int32_t interpret_ast(struct ASTNode* node, REG_COUNTER reg) {
     int64_t leftreg, rightreg;
 
     // Get left and right sub-tree vaues.
     if (node->left)
-        leftreg = interpret_ast(node->left);
+        leftreg = interpret_ast(node->left, -1);
 
     if (node->right)
-        rightreg = interpret_ast(node->right);
+        rightreg = interpret_ast(node->right, leftreg);
 
     switch (node->op) {
         case A_ADD:
@@ -139,12 +161,34 @@ int32_t interpret_ast(struct ASTNode* node) {
             return cg_div(leftreg, rightreg);
         case A_INTLIT:
             return (cg_load(node->val_int));
+        case A_LVIDENT:
+            return cg_stor_glob(reg, gsym[node->id].name);
+        case A_IDENT:
+            return cg_load_glob(gsym[node->id].name);
+        case A_ASSIGN:
+            return rightreg;
         default:
             printf("Unknown AST operator caught in %s().\n", __func__);
             panic();
     }
 
     return -1;
+}
+
+
+// Generate global symbol.
+// TODO: Update this as new types are a thing.
+void codegen_genglobsym(const char* sym, INTEGER_TYPE type) {
+    fprintf(out, "\t%s_start: jmp %s_end\n", sym, sym);
+    fprintf(out, "\tsection .data\n");
+    switch (type) {
+        case U8:
+            fprintf(out, "\t%s: db 0\n", sym);
+            break;
+    }
+
+    fprintf(out, "\tsection .text\n");
+    fprintf(out, "\t%s_end:\n", sym);
 }
 
 

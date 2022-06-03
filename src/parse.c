@@ -4,7 +4,9 @@
 #include <expr.h>
 #include <AST.h>
 #include <codegen.h>
+#include <symbol.h>
 #include <token.h>
+#include <lexer.h>
 #include <stdio.h>
 #include <stdint.h>
 
@@ -17,10 +19,24 @@ struct Token cur_token;
 // Parse a primary factor.
 static struct ASTNode* primary(void) {
     struct ASTNode* n;
+    int id;
 
     switch (cur_token.type) {
         case TT_INTLIT:
             n = mkastleaf(A_INTLIT, cur_token.val_int);
+            scan(&cur_token);
+            return n;
+        case TT_IDENT:
+            id = find_glob((char*)lexer_get_last_ident());
+
+            // Check if the identifier exists.
+            if (id == -1) {
+                printf(COLOR_ERROR "Using unknown variable on line %ld\n", get_line());
+                panic();
+            }
+
+            // Make an AST node for it.
+            n = mkastleaf(A_IDENT, id);
             scan(&cur_token);
             return n;
         default:
@@ -61,6 +77,19 @@ static void rparen(void) {
 }
 
 
+// Ensure next token is an identifier.
+static void ident(void) {
+    match(TT_IDENT, "Identifier");
+    scan(&cur_token);
+}
+
+// Ensure the next token is '='.
+static void equals(void) {
+    match(TT_ASSIGN, "'='");
+    scan(&cur_token);
+}
+
+
 static struct ASTNode* binexpr(void) {
     struct ASTNode *n, *left, *right;
     AST_NODE_TYPE type;
@@ -91,6 +120,7 @@ static struct ASTNode* binexpr(void) {
 }
 
 
+// Writes to console.
 static void conout(void) {
     scan(&cur_token);
     lparen();
@@ -98,7 +128,43 @@ static void conout(void) {
     rparen();
     semi();
 
-    codegen_printint(interpret_ast(tree));
+    codegen_printint(interpret_ast(tree, -1));
+}
+
+
+static void var_def(void) {
+    struct ASTNode *tree, *left, *right;
+    int id;
+
+    if ((id = find_glob((char*)lexer_get_last_ident())) == -1) {
+        printf(COLOR_ERROR "Trying to set a non existant symbol on line %ld\n", get_line());
+        panic();
+    }
+
+    equals();
+   
+    right = mkastleaf(A_LVIDENT, id);
+    left = binexpr();
+
+    // Create an assignment AST tree.
+    tree = mkastnode(A_ASSIGN, left, NULL, right, 0);
+    interpret_ast(tree, -1);
+    semi();
+}
+
+
+static void var_declaration(INTEGER_TYPE type) {
+    scan(&cur_token);
+    ident();
+    add_glob((char*)lexer_get_last_ident());
+    codegen_genglobsym((char*)lexer_get_last_ident(), type);
+
+    if (cur_token.type != TT_SEMI) {
+        var_def();
+        return;
+    }
+
+    semi();
 }
 
 
@@ -108,6 +174,9 @@ static void keyword(void) {
         case TT_CONOUT:
             conout();
             break;
+        case TT_U8:
+            var_declaration(U8);
+            break;
         default: break;
     }
 }
@@ -116,6 +185,10 @@ static void keyword(void) {
 void parse(void) {
     codegen_init();
     scan(&cur_token);
-    keyword();
+
+    while (!(is_eof())) {
+        keyword();
+    }
+
     codegen_end();
 }

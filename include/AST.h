@@ -16,6 +16,12 @@ typedef enum {
     A_LVIDENT,
     A_ASSIGN,
     A_IDENT,
+    A_EQ,
+    A_NE,
+    A_LT,
+    A_GT,
+    A_LE,
+    A_GE
 } AST_NODE_TYPE;
 
 

@@ -140,6 +140,67 @@ static REG_COUNTER cg_load_glob(const char* sym) {
 }
 
 
+static REG_COUNTER cgequal(REG_COUNTER r1, REG_COUNTER r2) {
+    fprintf(out, "\tcmp %s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tsete al\n");
+    fprintf(out, "\tmovzx %s, al\n", regs[r1]);
+    fprintf(out, "\tand %s, 0xFF\n", regs[r1]);
+    cg_free_reg(r2);
+    return r1;
+}
+
+
+static REG_COUNTER cgnotequal(REG_COUNTER r1, REG_COUNTER r2) {
+    fprintf(out, "\tcmp %s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tsetne al\n");
+    fprintf(out, "\tmovzx %s, al\n", regs[r1]);
+    fprintf(out, "\tand %s, 0xFF\n", regs[r1]);
+    cg_free_reg(r2);
+    return r1;
+}
+
+
+static REG_COUNTER cglessthan(REG_COUNTER r1, REG_COUNTER r2) {
+    fprintf(out, "\tcmp %s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tsetl al\n");
+    fprintf(out, "\tmovzx %s, al\n", regs[r1]);
+    fprintf(out, "\tand %s, 0xFF\n", regs[r1]);
+    cg_free_reg(r2);
+    return r1;
+}
+
+static REG_COUNTER cggreaterthan(REG_COUNTER r1, REG_COUNTER r2) {
+    fprintf(out, "\tcmp %s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tsetg al\n");
+    fprintf(out, "\tmovzx %s, al\n", regs[r1]);
+    fprintf(out, "\tand %s, 0xFF\n", regs[r1]);
+    cg_free_reg(r2);
+    return r1;
+}
+
+
+static REG_COUNTER cglessequal(REG_COUNTER r1, REG_COUNTER r2) {
+    fprintf(out, "\tcmp %s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tsetle al\n");
+    fprintf(out, "\tmovzx %s, al\n", regs[r1]);
+    fprintf(out, "\tand %s, 0xFF\n", regs[r1]);
+    cg_free_reg(r2);
+    return r1;
+}
+
+
+static REG_COUNTER cggreaterqual(REG_COUNTER r1, REG_COUNTER r2) {
+    fprintf(out, "\tcmp %s, %s\n", regs[r1], regs[r2]);
+    fprintf(out, "\tsetge al\n");
+    fprintf(out, "\tmovzx %s, al\n", regs[r1]);
+    fprintf(out, "\tand %s, 0xFF\n", regs[r1]);
+    cg_free_reg(r2);
+    return r1;
+}
+
+
+
+
 int32_t interpret_ast(struct ASTNode* node, REG_COUNTER reg) {
     int64_t leftreg, rightreg;
 
@@ -167,6 +228,18 @@ int32_t interpret_ast(struct ASTNode* node, REG_COUNTER reg) {
             return cg_load_glob(gsym[node->id].name);
         case A_ASSIGN:
             return rightreg;
+        case A_EQ:
+            return cgequal(leftreg, rightreg);
+        case A_NE:
+            return cgnotequal(leftreg, rightreg);
+        case A_LT:
+            return cglessthan(leftreg, rightreg);
+        case A_GT:
+            return cggreaterthan(leftreg, rightreg);
+        case A_LE:
+            return cglessequal(leftreg, rightreg);
+        case A_GE:
+            return cggreaterqual(leftreg, rightreg);
         default:
             printf("Unknown AST operator caught in %s().\n", __func__);
             panic();

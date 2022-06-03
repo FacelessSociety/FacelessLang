@@ -1,2 +1,3 @@
 u8 b = 2;
 conout(b+1);
+conout(b);
